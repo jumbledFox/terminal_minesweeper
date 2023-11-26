@@ -11,9 +11,10 @@ use crossterm::{
 use core::num;
 use std::{borrow::Cow, io::stdout, cmp::Reverse};
 
-use super::board::Board;
+use super::board::{Board, Position};
 
-pub fn draw_board(board: &Board, selected_cell: &[u16; 2]) -> std::io::Result<()> {
+pub fn draw_board(board: &Board) -> std::io::Result<()> {
+    let mut lines = String::new();
     for y in 0..board.height {
         // Define empty string for a line
         let mut l: String = String::new();
@@ -22,23 +23,18 @@ pub fn draw_board(board: &Board, selected_cell: &[u16; 2]) -> std::io::Result<()
             // Get the tile
             let tile = board.get_tile(x, y);
             // And turn it into a string
-            // let mut tile_str: StyledContent<String> = match tile {
-            //     &Tile::Blank                => " - ".to_owned().with(Color::Rgb { r: 170, g: 170, b: 170 }),
-            //     &Tile::Unopened             => " - ".to_owned().on  (Color::Rgb { r: 200, g: 200, b: 200 }),
-            //     &Tile::Flag                 => " F ".to_owned().on  (Color::Rgb { r: 224, g: 83,  b: 160 }),
-            //     &Tile::Numbered(number) => format!(" {} ", number).with(get_number_color(number)),
-            // };
             let mut tile_str: StyledContent<String> = match tile {
                 &Tile::Blank                =>        " - ".to_owned(),
                 &Tile::Unopened             =>        " - ".to_owned(),
                 &Tile::Flag                 =>        " F ".to_owned(),
                 &Tile::Numbered(number) => format!(" {} ", number),
             }.stylize();
-            // if board.bombs.contains(&[x, y]) {
-            //     tile_str = "!!!".to_owned().white().on(Color::Rgb{ r: 238, g: 181, b: 112 });
-            // }
             // Get the style info of the tile
             let style_info = get_tile_style(tile);
+            if board.bombs.contains(&Position {x: x, y: y}) {
+                //tile_str = " ! ".to_owned().stylize();
+                //style_info = StyleInfo {fg: Color::Rgb{ r: 229, g: 113, b: 78 }, bg: Color::Reset, reversed: true };
+            }
             // If the tile is meant to be reversed, reverse it
             if style_info.reversed {
                 tile_str = tile_str.reverse();
@@ -46,15 +42,17 @@ pub fn draw_board(board: &Board, selected_cell: &[u16; 2]) -> std::io::Result<()
             // Push that string to the line string
             l.push_str(&format!("{}", tile_str.with(style_info.fg).on(style_info.bg)));
         }
-        // And then draw the line
-        execute!(
-            stdout(),
-            cursor::MoveTo(0, y),
-            Print(l),
-        )?;
+        lines.push_str(&l);
+        lines.push_str("\n");
     }
+    // And then draw the line
+    execute!(
+        stdout(),
+        cursor::MoveTo(0, 0),
+        Print(lines),
+    )?;
     // Draw cursor
-    let cursor_col = get_tile_style(&board.get_tile(selected_cell[0], selected_cell[1]));
+    let cursor_col = get_tile_style(&board.get_tile(board.selected_cell.x, board.selected_cell.y));
 
     stdout().execute(ResetColor)?;
     if cursor_col.reversed {
@@ -64,9 +62,9 @@ pub fn draw_board(board: &Board, selected_cell: &[u16; 2]) -> std::io::Result<()
         stdout(),
         SetForegroundColor(cursor_col.fg),
         SetBackgroundColor(cursor_col.bg),
-        cursor::MoveTo(selected_cell[0] * 3, selected_cell[1]),
+        cursor::MoveTo(board.selected_cell.x * 3,     board.selected_cell.y),
         Print("["),
-        cursor::MoveTo(selected_cell[0] * 3 + 2, selected_cell[1]),
+        cursor::MoveTo(board.selected_cell.x * 3 + 2, board.selected_cell.y),
         Print("]"),
         ResetColor,
         cursor::MoveTo(0, board.height),
