@@ -13,7 +13,7 @@ use game::{board::Board, renderer};
 
 fn main()-> std::io::Result<()> {
     enable_raw_mode()?;
-    let mut board = Board::new(16, 16, 25);
+    let mut board = Board::new(30, 16, 99);
     execute!(
         stdout(),
         crossterm::terminal::Clear(crossterm::terminal::ClearType::All),
@@ -32,14 +32,15 @@ fn main()-> std::io::Result<()> {
             Event::Key(KeyEvent { code, modifiers, kind, state }) => {
                 if kind == KeyEventKind::Press {
                     match code {
-                        KeyCode::Esc        => { break; }
+                        // Exiting
+                        KeyCode::Esc   => { break; }
                         // Moving the cursor
-                        KeyCode::Right      => { board.move_selected_cell( 1, 0); continue; }
-                        KeyCode::Left       => { board.move_selected_cell(-1, 0); continue; }
-                        KeyCode::Up         => { board.move_selected_cell( 0,-1); continue; }
-                        KeyCode::Down       => { board.move_selected_cell( 0, 1); continue; }
+                        KeyCode::Right => { board.move_selected_cell( 1, 0); continue; }
+                        KeyCode::Left  => { board.move_selected_cell(-1, 0); continue; }
+                        KeyCode::Up    => { board.move_selected_cell( 0,-1); continue; }
+                        KeyCode::Down  => { board.move_selected_cell( 0, 1); continue; }
                         // Dig
-                        KeyCode::Char(' ')  => { board.dig(); continue; }
+                        KeyCode::Char(' ') | KeyCode::Enter => { board.dig(); continue; }
                         // Flag
                         KeyCode::Char('f')  => { board.flag(); continue; }
                         _ => {}

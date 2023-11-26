@@ -1,17 +1,14 @@
 // Todo: rethink whatever this shitty file is
 
-use crate::game::board::Tile;
-
 use crossterm::{
     style::{Color, ResetColor, SetForegroundColor, SetBackgroundColor, Print, Stylize, StyledContent, Attribute, SetAttribute},
     execute,
     cursor, ExecutableCommand,
 };
 
-use core::num;
-use std::{borrow::Cow, io::stdout, cmp::Reverse};
+use std::io::stdout;
 
-use super::board::{Board, Position};
+use crate::game::board::{Board, Tile, Position};
 
 pub fn draw_board(board: &Board) -> std::io::Result<()> {
     let mut lines = String::new();
@@ -49,6 +46,8 @@ pub fn draw_board(board: &Board) -> std::io::Result<()> {
     execute!(
         stdout(),
         cursor::MoveTo(0, 0),
+        Print("MINESWEEPER - XP "),
+        cursor::MoveTo(0, 1),
         Print(lines),
     )?;
     // Draw cursor
@@ -87,9 +86,9 @@ fn get_tile_style(tile: &Tile) -> StyleInfo {
             2 => StyleInfo { fg: Color::Rgb { r: 181, g: 238, b: 112 }, bg: Color::Reset, reversed: false }, 
             3 => StyleInfo { fg: Color::Rgb { r: 238, g: 112, b: 181 }, bg: Color::Reset, reversed: false }, 
             4 => StyleInfo { fg: Color::Rgb { r: 181, g: 112, b: 238 }, bg: Color::Reset, reversed: false }, 
-            5 => StyleInfo { fg: Color::Rgb { r: 234, g: 186, b: 255 }, bg: Color::Reset, reversed: false }, 
-            6 => StyleInfo { fg: Color::Rgb { r: 238, g: 181, b: 112 }, bg: Color::Reset, reversed: false }, 
-            7 => StyleInfo { fg: Color::Rgb { r: 255, g: 236, b: 188 }, bg: Color::Reset, reversed: false }, 
+            5 => StyleInfo { fg: Color::Rgb { r: 238, g: 181, b: 112 }, bg: Color::Reset, reversed: false },
+            6 => StyleInfo { fg: Color::Rgb { r: 255, g: 236, b: 188 }, bg: Color::Reset, reversed: false },
+            7 => StyleInfo { fg: Color::Rgb { r: 234, g: 186, b: 255 }, bg: Color::Reset, reversed: false }, 
             _ => StyleInfo { fg: Color::Rgb { r: 112, g: 238, b: 181 }, bg: Color::Reset, reversed: false }, 
         }
         Tile::Blank    => StyleInfo { fg: Color::Rgb { r: 170, g: 170, b: 170 }, bg: Color::Reset, reversed: false },

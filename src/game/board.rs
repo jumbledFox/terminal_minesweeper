@@ -1,6 +1,7 @@
 use std::cmp::min;
 use rand::prelude::*;
 
+// Represents a position on the board
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Position {
     pub x: u16,
@@ -13,12 +14,6 @@ pub enum Tile {
     Blank,
     Numbered(u8),
     Flag,
-}
-
-#[derive(PartialEq, Clone, Copy, Debug)]
-enum SearchType {
-    Bomb,
-    Unopened,
 }
 
 pub struct Board {
@@ -34,13 +29,12 @@ pub struct Board {
 impl Board {
     // Creates a new board
     pub fn new(width: u16, height: u16, bomb_count: u16) -> Board {
-        
-
         // Initialise tiles as a bunch of unopened tiles
         let mut tiles = vec![Tile::Unopened; width as usize*height as usize];
+        // Set the selected cell to be in the middle of the grid
+        let selected_cell = Position { x: width/2, y: height/2 };
 
-        Board { width: width, height: height, tiles: tiles, bombs: Vec::new(), bomb_count: bomb_count, goes: 0, 
-            selected_cell: Position { x: width/2, y: height/2 } }
+        Board { width: width, height: height, tiles: tiles, bombs: Vec::new(), bomb_count: bomb_count, goes: 0, selected_cell: selected_cell }
     }
 
     // This function populates the bomb vector, making sure no bombs are generated in a 3x3 area around the selected cell
@@ -74,6 +68,18 @@ impl Board {
         }
     }
 
+    
+    // Moves where the selected cell is, making sure it stays within bounds
+    pub fn move_selected_cell(&mut self, x: i32, y: i32) {
+        let new_x = self.selected_cell.x as i32 + x;
+        let new_y = self.selected_cell.y as i32 + y;
+
+        if self.check_bounds(new_x, new_y) {
+            self.selected_cell.x = new_x as u16;
+            self.selected_cell.y = new_y as u16;
+        }
+    }
+
     // Gets the tile at a coordinate
     pub fn get_tile(&self, x: u16, y: u16) -> &Tile {
         &self.tiles[x as usize + y as usize * self.width as usize]
@@ -81,16 +87,6 @@ impl Board {
     // Sets the tile at a coordinate
     pub fn set_tile(&mut self, x: u16, y: u16, tile: Tile) {
         self.tiles[x as usize + (y * self.width) as usize] = tile;
-    }
-    
-    pub fn index_to_coorinate(&self, index: usize) -> Position {
-        Position {
-            x: (index % self.width as usize) as u16,
-            y: (index / self.width as usize) as u16,
-        }
-    }
-    pub fn coorinate_to_index(&self, x: u16, y: u16) -> usize {
-        x as usize + (y * self.width) as usize
     }
 
     pub fn check_bounds(&self, x: i32, y: i32) -> bool {
@@ -100,19 +96,54 @@ impl Board {
             y < 0)
     }
 
-    // Moves where the selected cell is, making sure it stays within bounds
-    pub fn move_selected_cell(&mut self, x: i16, y: i16) {
-        if !(
-            self.selected_cell.x as i16 + x >= self.width as i16 ||
-            self.selected_cell.x as i16 + x < 0) {
-            self.selected_cell.x = (self.selected_cell.x as i16 + x) as u16;
+    // Checks if x and y are in the 3x3 area around x2 and y2
+    fn in_3x3(&self, x: u16, y: u16, x2: u16, y2: u16) -> bool {
+        // i could do this mathematically but this is way easier
+        for v in -1..=1 {
+        for h in -1..=1 {
+            // x and y position as i32s
+            let x_i = x as i32 + h;
+            let y_i = y as i32 + v;
+
+            // Skip if we're checking somewhere that's out of bounds
+            if !self.check_bounds(x_i, y_i) { continue; }
+            // If the coordinate is in the area, return true!
+            if x_i as u16 == x2 && y_i as u16 == y2 { return true }
         }
-        if !(
-            self.selected_cell.y as i16 + y >= self.height as i16 ||
-            self.selected_cell.y as i16 + y < 0) {
-            self.selected_cell.y = (self.selected_cell.y as i16 + y) as u16;
         }
+        false
     }
+
+    // Scans a 3x3 area, returns the loations of things inside it
+    fn scan_3x3(&mut self, x: u16, y: u16) -> (u8, Vec<Position>) {
+        let mut bomb_count = 0;
+        let mut unopened_positions = Vec::new();
+
+        // Loop through all neighbours in a 3x3 radius
+        for v in -1..=1 {
+        for h in -1..=1 {
+            // If we're in the middle, skip it!!!
+            if v == 0 && h == 0 { continue; }
+            
+            // x and y position as i32s
+            let x_i = x as i32 + h;
+            let y_i = y as i32 + v;
+
+            // Skip if we're checking somewhere that's out of bounds
+            if !self.check_bounds(x_i, y_i) { continue; }
+
+            let pos = Position { x: x_i as u16, y: y_i as u16 };
+            if self.bombs.contains(&pos) {
+                bomb_count += 1;
+            } else if self.get_tile(x_i as u16, y_i as u16) == &Tile::Unopened {
+                unopened_positions.push(pos)      
+            }
+        }
+        }
+
+        (bomb_count, unopened_positions)
+    }
+
 
     // Toggles a flag at the selected cell
     pub fn flag(&mut self) {
@@ -130,83 +161,25 @@ impl Board {
         let x = self.selected_cell.x;
         let y = self.selected_cell.y;
         // You can only dig unopened cells
-        if self.get_tile(x, y) != &Tile::Unopened {
-            return;
-        }
+        if self.get_tile(x, y) != &Tile::Unopened { return; }
         // If it's the users first go, add bombs to the map
-        if self.goes == 0 {
-            self.populate_bombs();
-        }
+        if self.goes == 0 { self.populate_bombs(); }
+        // Increase the go count
         self.goes += 1;
 
-        // You dug a bomb!!
+        // You dug a bomb!! Yeeooowwch!!
         if self.bombs.contains(&self.selected_cell) {
             // BANG!
             return;
         }
+        // Start digging
         self.flood_dig(x, y);
     }
 
-    // checks if x and y are in the 3x3 area around x2 and y2
-    fn in_3x3(&self, x: u16, y: u16, x2: u16, y2: u16) -> bool {
-        // i could do this mathematically but this is way easier
-        for v in -1..=1 {
-        for h in -1..=1 {
-            // x and y position as i32s
-            let x_i = x as i32 + h;
-            let y_i = y as i32 + v;
-
-            // Skip if we're checking somewhere that's out of bounds
-            if !self.check_bounds(x_i, y_i) { continue; }
-
-            if x_i as u16 == x2 && y_i as u16 == y2 { return true }
-        }
-        }
-        false
-    }
-
-    // Scans a 3x3 area, returns the loations of things inside it
-    // If include_middle is false it ignores the middle cell
-    // search_for is what we're looking for in the 3x3 area
-    fn scan_3x3(&mut self, x: u16, y: u16, include_middle: bool, search_for: SearchType) -> Vec<Position> {
-        let mut positions = Vec::new();
-
-        // Loop through all neighbours in a 3x3 radius
-        for v in -1..=1 {
-        for h in -1..=1 {
-            // If include_middle is false, and we're in the middle, skip it!!!
-            if v == 0 && h == 0 && !include_middle { continue; }
-            
-            // x and y position as i32s
-            let x_i = x as i32 + h;
-            let y_i = y as i32 + v;
-
-            // Skip if we're checking somewhere that's out of bounds
-            if !self.check_bounds(x_i, y_i) { continue; }
-
-            let pos = Position { x: x_i as u16, y: y_i as u16 };
-            match search_for {
-                // If we're looking for bombs
-                SearchType::Bomb => {
-                    if self.bombs.contains(&pos) {
-                        positions.push(pos);
-                    }
-                }
-                // If we're looking for unopened tiles
-                SearchType::Unopened => {
-                    if self.get_tile(x_i as u16, y_i as u16) == &Tile::Unopened {
-                        positions.push(pos)      
-                    }
-                }
-            }
-        }
-        }
-        positions
-    }
-
     pub fn flood_dig(&mut self, x: u16, y: u16) {
-        let bomb_neighbours      = self.scan_3x3(x, y, false, SearchType::Bomb).len();
-        let tiles_to_dig: Vec<Position> = self.scan_3x3(x, y, false, SearchType::Unopened);
+        let scan_result = self.scan_3x3(x, y);
+        let bomb_neighbours = scan_result.0;
+        let tiles_to_dig = scan_result.1;
 
         // If the tile isn't next to a bomb, make it blank and dig all of the neighbours
         if bomb_neighbours == 0 {
