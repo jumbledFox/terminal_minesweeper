@@ -24,6 +24,7 @@ pub struct Board {
     pub bombs: Vec<Position>,
     pub selected_cell: Position,
     pub goes: usize,
+    pub flag_count: usize,
 }
 
 impl Board {
@@ -34,7 +35,7 @@ impl Board {
         // Set the selected cell to be in the middle of the grid
         let selected_cell = Position { x: width/2, y: height/2 };
 
-        Board { width: width, height: height, tiles: tiles, bombs: Vec::new(), bomb_count: bomb_count, goes: 0, selected_cell: selected_cell }
+        Board { width: width, height: height, tiles: tiles, bombs: Vec::new(), bomb_count: bomb_count, goes: 0, selected_cell: selected_cell, flag_count: 0 }
     }
 
     // This function populates the bomb vector, making sure no bombs are generated in a 3x3 area around the selected cell
@@ -150,8 +151,8 @@ impl Board {
         let x = self.selected_cell.x;
         let y = self.selected_cell.y;
         match self.get_tile(x, y) {
-            Tile::Unopened => { self.set_tile(x, y, Tile::Flag)     },
-            Tile::Flag     => { self.set_tile(x, y, Tile::Unopened) },
+            Tile::Unopened => { self.set_tile(x, y, Tile::Flag);     self.flag_count+=1 },
+            Tile::Flag     => { self.set_tile(x, y, Tile::Unopened); self.flag_count-=1 },
             _ => {},
         }
     }

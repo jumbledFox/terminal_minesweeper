@@ -40,14 +40,25 @@ pub fn draw_board(board: &Board) -> std::io::Result<()> {
             l.push_str(&format!("{}", tile_str.with(style_info.fg).on(style_info.bg)));
         }
         lines.push_str(&l);
-        lines.push_str("\n");
+        lines.push_str("\n\r");
     }
-    // And then draw the line
+    // Generate the titlebar
+    // This is really really ugly.. TODO: Make better :c
+    let mut title_bar: String = format!("{}", "jumbledFox's Minesweeper\n\r".to_owned().stylize().with(Color::Rgb {r: 239, g: 125, b: 87}));
+    title_bar.push_str(&format!("{}", "Mines: "));
+    let mines_left = match board.flag_count >= board.bomb_count as usize {
+        false => board.bomb_count as usize - board.flag_count,
+        _ => 0,
+    };
+    title_bar.push_str(&format!("{}", &format!("{:0>2}", mines_left.to_string()).stylize().red()));
+    title_bar.push_str(&format!("{}", "    Time: "));
+    title_bar.push_str(&format!("{}", &format!("{:0>3}", "0").stylize().red()));
+    // Draw the screen
     execute!(
         stdout(),
         cursor::MoveTo(0, 0),
-        Print("MINESWEEPER - XP "),
-        cursor::MoveTo(0, 1),
+        Print(title_bar),
+        cursor::MoveTo(0, 2),
         Print(lines),
     )?;
     // Draw cursor
@@ -61,12 +72,12 @@ pub fn draw_board(board: &Board) -> std::io::Result<()> {
         stdout(),
         SetForegroundColor(cursor_col.fg),
         SetBackgroundColor(cursor_col.bg),
-        cursor::MoveTo(board.selected_cell.x * 3,     board.selected_cell.y),
+        cursor::MoveTo(board.selected_cell.x * 3,     board.selected_cell.y + 2),
         Print("["),
-        cursor::MoveTo(board.selected_cell.x * 3 + 2, board.selected_cell.y),
+        cursor::MoveTo(board.selected_cell.x * 3 + 2, board.selected_cell.y + 2),
         Print("]"),
         ResetColor,
-        cursor::MoveTo(0, board.height),
+        cursor::MoveTo(0, board.height+2),
     )?;
     
     Ok(())

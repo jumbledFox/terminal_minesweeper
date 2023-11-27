@@ -5,7 +5,12 @@ use crossterm::{
     cursor,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor, Stylize},
     ExecutableCommand,
-    event::{poll, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, self, KeyEvent, KeyEventState, KeyEventKind}, terminal::enable_raw_mode,
+    event::{self, poll, read, Event, KeyCode, KeyEvent, KeyEventState, KeyEventKind},
+    event::{
+        DisableBracketedPaste, DisableFocusChange, EnableBracketedPaste,
+        EnableFocusChange, PopKeyboardEnhancementFlags, DisableMouseCapture, EnableMouseCapture, 
+    },
+    terminal::{enable_raw_mode, disable_raw_mode},
 };
 
 pub mod game;
@@ -52,6 +57,15 @@ fn main()-> std::io::Result<()> {
         }
         poll(Duration::from_millis(1_000))?;
     }
+    
+    // Clean up
+    execute!(
+        stdout(),
+        DisableBracketedPaste,
+        PopKeyboardEnhancementFlags,
+        DisableFocusChange,
+        DisableMouseCapture,
+    )?;
 
-    Ok(())
+    disable_raw_mode()
 }
