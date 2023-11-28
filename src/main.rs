@@ -15,13 +15,37 @@ pub mod game;
 use game::{board::Board, renderer};
 
 fn main()-> std::io::Result<()> {
-    let mut board = Board::new(16, 16, 20);
 
-    renderer::initialize()?;
+    let args: Vec<String> = env::args().collect();
     
+    let mut board: Board;
+    match args.len() {
+        // One word arguments
+        _ => {
+            match args[1].to_lowercase().as_str() {
+                "easy" => { board = Board::new(9,  9, 10) }
+                "normal" => { board = Board::new(16, 16, 40) }
+                "hard" | _ => { board = Board::new(30, 16, 99) }
+                // "help" => {},
+                // _ => { }
+            }
+        }
+        // // Custom game
+        // 4 => {
+        //     if args[2].parse::<u16>().unwrap() == 1 {
+
+        //     }
+        // }
+        // _ => {}
+    }
+
+    //board = Board::new(16, 16, 20);
     let timer = Instant::now();
     let mut redraw_board = true;
 
+    renderer::initialize()?;
+
+    //return Ok(());
     // Main loop
     loop {
         // This is the main game loop
@@ -66,7 +90,7 @@ fn main()-> std::io::Result<()> {
             }    
         }
         // Redraw the board
-        if redraw_board { renderer::draw_board(&board)?; redraw_board = false; }
+        if redraw_board { renderer::draw_screen(&board)?; redraw_board = false; }
         // Exit if the game is over
         if board.exit.is_some() { break; }
     }

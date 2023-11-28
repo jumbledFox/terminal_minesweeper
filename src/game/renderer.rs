@@ -10,7 +10,7 @@ use crossterm::{
 
 use std::io::stdout;
 
-use crate::game::board::{Board, Tile, Position};
+use crate::game::board::{Board, Tile};
 
 use super::board;
 
@@ -49,7 +49,8 @@ pub fn clear() -> std::io::Result<()> {
     )
 }
 
-pub fn draw_board(board: &Board) -> std::io::Result<()> {
+// Draws the board, cursor, and titlebar
+pub fn draw_screen(board: &Board) -> std::io::Result<()> {
     let mut lines = String::new();
     // Loop each line
     for y in 0..board.height {
@@ -99,8 +100,13 @@ pub fn draw_board(board: &Board) -> std::io::Result<()> {
 
 
     // Generate the titlebar
-    // This is really really ugly.. TODO: Make better :c
-    let mut title_bar: String = format!("{}", "jumbledFox's Minesweeper\n\r".to_owned().stylize().with(Color::Rgb {r: 239, g: 125, b: 87}));
+    // This is really really ugly.. TODO: Make better :c (maybe its own separate function)
+    let mut title_bar: String = format!("{}", "jumbledFox's Minesweeper".to_owned().stylize().with(Color::Rgb {r: 239, g: 125, b: 87}));
+    title_bar.push_str(&format!("{}", " - ".stylize().grey()));
+    title_bar.push_str(&format!("{}", "Easy ".stylize().green()));
+    title_bar.push_str(&format!("{}", "(10x10, 25 mines)".stylize().dark_green()));
+
+    title_bar.push_str("\n\r");
     title_bar.push_str(&format!("{}", "Mines: "));
     let mines_left = match board.flag_count >= board.bomb_count as usize {
         false => board.bomb_count as usize - board.flag_count,
