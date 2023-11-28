@@ -1,12 +1,7 @@
 use std::cmp::min;
 use rand::prelude::*;
 
-// Represents a position on the board
-#[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Position {
-    pub x: u16,
-    pub y: u16,
-}
+pub type Position = (u16, u16);
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Tile {
@@ -40,7 +35,7 @@ impl Board {
         // Initialise tiles as a bunch of unopened tiles
         let mut tiles = vec![Tile::Unopened; width as usize*height as usize];
         // Set the selected cell to be in the middle of the grid
-        let selected_cell = Position { x: width/2, y: height/2 };
+        let selected_cell = (width/2, height/2);
 
         Board { width: width, height: height, tiles: tiles, bombs: Vec::new(), bomb_count: bomb_count, goes: 0,
             selected_cell: selected_cell, flag_count: 0, timer: 0, exit: None }
@@ -69,8 +64,8 @@ impl Board {
                 // Add 1 to the index
                 pos_index += 1;
                 // If it's not in a 3x3 area around the selected cell, add it and move on to the next bomb !!!
-                if !self.in_3x3(x, y, self.selected_cell.x, self.selected_cell.y) {
-                    self.bombs.push(Position { x, y });
+                if !self.in_3x3(x, y, self.selected_cell.0, self.selected_cell.1) {
+                    self.bombs.push((x, y));
                     continue 'each_bomb;
                 }
             }
@@ -79,12 +74,12 @@ impl Board {
 
     // Moves where the selected cell is, making sure it stays within bounds
     pub fn move_selected_cell(&mut self, x: i32, y: i32) {
-        let new_x = self.selected_cell.x as i32 + x;
-        let new_y = self.selected_cell.y as i32 + y;
+        let new_x = self.selected_cell.0 as i32 + x;
+        let new_y = self.selected_cell.1 as i32 + y;
 
         if self.check_bounds(new_x, new_y) {
-            self.selected_cell.x = new_x as u16;
-            self.selected_cell.y = new_y as u16;
+            self.selected_cell.0 = new_x as u16;
+            self.selected_cell.1 = new_y as u16;
         }
     }
 
@@ -140,7 +135,7 @@ impl Board {
             // Skip if we're checking somewhere that's out of bounds
             if !self.check_bounds(x_i, y_i) { continue; }
 
-            let pos = Position { x: x_i as u16, y: y_i as u16 };
+            let pos = (x_i as u16, y_i as u16);
             if self.bombs.contains(&pos) {
                 bomb_count += 1;
             } else if self.get_tile(x_i as u16, y_i as u16) == &Tile::Unopened {
@@ -155,8 +150,8 @@ impl Board {
 
     // Toggles a flag at the selected cell
     pub fn flag(&mut self) {
-        let x = self.selected_cell.x;
-        let y = self.selected_cell.y;
+        let x = self.selected_cell.0;
+        let y = self.selected_cell.1;
         match self.get_tile(x, y) {
             Tile::Unopened => { self.set_tile(x, y, Tile::Flag);     self.flag_count+=1 },
             Tile::Flag     => { self.set_tile(x, y, Tile::Unopened); self.flag_count-=1 },
@@ -166,8 +161,8 @@ impl Board {
 
     // Digs at the selected cell
     pub fn dig(&mut self) {
-        let x = self.selected_cell.x;
-        let y = self.selected_cell.y;
+        let x = self.selected_cell.0;
+        let y = self.selected_cell.1;
         // You can only dig unopened cells
         if self.get_tile(x, y) != &Tile::Unopened { return; }
         // If it's the users first go, add bombs to the map
@@ -202,7 +197,7 @@ impl Board {
 
             //dig all the neighbours
             for tile in tiles_to_dig {
-                self.flood_dig(tile.x, tile.y);
+                self.flood_dig(tile.0, tile.1);
             }
         }
         // Otherwise, make it numbered

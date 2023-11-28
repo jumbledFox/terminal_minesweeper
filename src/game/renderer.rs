@@ -70,7 +70,7 @@ pub fn draw_board(board: &Board) -> std::io::Result<()> {
             let mut style_info = get_tile_style(Some(tile));
 
             
-            let bomb_at_current_pos = board.bombs.contains(&Position { x: x, y: y });
+            let bomb_at_current_pos = board.bombs.contains(&(x, y));
             // If the game is over, draw all of the flags where there WASN'T a bomb with a line through
             if board.exit.is_some() {
                 // If there's not a bomb at the current position and it's a flag, show that the flag was wrong!
@@ -78,7 +78,7 @@ pub fn draw_board(board: &Board) -> std::io::Result<()> {
                     tile_str = tile_str.crossed_out();
                 }
             }        
-            if board.exit == Some(board::ExitType::Lose) && board.bombs.contains(&Position {x: x, y: y}) && tile != &Tile::Flag {
+            if board.exit == Some(board::ExitType::Lose) && board.bombs.contains(&(x, y)) && tile != &Tile::Flag {
                 // If there's a bomb at the current position and the tile isn't a flag, show it!!
                 if bomb_at_current_pos && tile != &Tile::Flag {
                     tile_str = " ! ".to_owned().stylize();
@@ -120,7 +120,7 @@ pub fn draw_board(board: &Board) -> std::io::Result<()> {
     )?;
 
     // Draw cursor
-    let cursor_col = get_tile_style(Some(&board.get_tile(board.selected_cell.x, board.selected_cell.y)));
+    let cursor_col = get_tile_style(Some(&board.get_tile(board.selected_cell.0, board.selected_cell.1)));
 
     stdout().execute(ResetColor)?;
     if cursor_col.2 {
@@ -130,9 +130,9 @@ pub fn draw_board(board: &Board) -> std::io::Result<()> {
         stdout(),
         SetForegroundColor(cursor_col.0),
         SetBackgroundColor(cursor_col.1),
-        cursor::MoveTo(board.selected_cell.x * 3,     board.selected_cell.y + 2),
+        cursor::MoveTo(board.selected_cell.0 * 3,     board.selected_cell.1 + 2),
         Print("["),
-        cursor::MoveTo(board.selected_cell.x * 3 + 2, board.selected_cell.y + 2),
+        cursor::MoveTo(board.selected_cell.0 * 3 + 2, board.selected_cell.1 + 2),
         Print("]"),
         ResetColor,
     )?;
