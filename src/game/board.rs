@@ -16,6 +16,11 @@ pub enum Tile {
     Flag,
 }
 
+#[derive(PartialEq)]
+pub enum ExitType {
+    Win,
+    Lose,
+}
 pub struct Board {
     pub width: u16,
     pub height: u16,
@@ -25,6 +30,8 @@ pub struct Board {
     pub selected_cell: Position,
     pub goes: usize,
     pub flag_count: usize,
+    pub timer: u64,
+    pub exit: Option<ExitType>,
 }
 
 impl Board {
@@ -35,7 +42,8 @@ impl Board {
         // Set the selected cell to be in the middle of the grid
         let selected_cell = Position { x: width/2, y: height/2 };
 
-        Board { width: width, height: height, tiles: tiles, bombs: Vec::new(), bomb_count: bomb_count, goes: 0, selected_cell: selected_cell, flag_count: 0 }
+        Board { width: width, height: height, tiles: tiles, bombs: Vec::new(), bomb_count: bomb_count, goes: 0,
+            selected_cell: selected_cell, flag_count: 0, timer: 0, exit: None }
     }
 
     // This function populates the bomb vector, making sure no bombs are generated in a 3x3 area around the selected cell
@@ -69,7 +77,6 @@ impl Board {
         }
     }
 
-    
     // Moves where the selected cell is, making sure it stays within bounds
     pub fn move_selected_cell(&mut self, x: i32, y: i32) {
         let new_x = self.selected_cell.x as i32 + x;
@@ -89,7 +96,7 @@ impl Board {
     pub fn set_tile(&mut self, x: u16, y: u16, tile: Tile) {
         self.tiles[x as usize + (y * self.width) as usize] = tile;
     }
-
+    // Checks if a coordinate is inside of the board
     pub fn check_bounds(&self, x: i32, y: i32) -> bool {
         !(  x >= self.width as i32 ||
             x < 0 ||
@@ -171,10 +178,17 @@ impl Board {
         // You dug a bomb!! Yeeooowwch!!
         if self.bombs.contains(&self.selected_cell) {
             // BANG!
+            println!("BANG! You lose :c");
+            self.exit = Some(ExitType::Lose);
             return;
         }
         // Start digging
         self.flood_dig(x, y);
+        // Check if, once digging's complete, all uncovered tiles are mines
+        if self.tiles.iter().filter(|&x| x == &Tile::Unopened || x == &Tile::Flag ).count() == self.bombs.len() {
+            println!("You win!! Well done!");
+            self.exit = Some(ExitType::Win);
+        }
     }
 
     pub fn flood_dig(&mut self, x: u16, y: u16) {
