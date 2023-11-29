@@ -60,7 +60,7 @@ impl Board {
             BoardType::Easy =>   (9,  9,  10, String::from("Easy"),   Color::Green, Color::DarkGreen),
             BoardType::Normal => (16, 16, 40, String::from("Normal"), Color::Cyan,  Color::DarkCyan),
             BoardType::Hard =>   (30, 16, 99, String::from("Hard"),   Color::Red,   Color::DarkRed),
-            BoardType::Custom(w, h, b) => (*w, *h, min(*b, (w*h)-9), String::from("Custom"), Color::Yellow, Color::DarkYellow),
+            BoardType::Custom(w, h, b) => (*w, *h, min(*b, (w*h).saturating_sub(9)), String::from("Custom"), Color::Yellow, Color::DarkYellow),
         }
     }
     // This function populates the bomb vector, making sure no bombs are generated in a 3x3 area around the selected cell
