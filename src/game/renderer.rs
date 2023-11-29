@@ -96,7 +96,7 @@ pub fn draw_screen(board: &Board) -> std::io::Result<()> {
         }
         // Add the line to the lines string
         lines.push_str(&l);
-        lines.push_str("\n\r");
+        lines.push_str(&format!("{}", " \n\r".stylize().reset()));
     }
 
 
@@ -104,13 +104,14 @@ pub fn draw_screen(board: &Board) -> std::io::Result<()> {
     // This is really really ugly.. TODO: Make better :c (maybe its own separate function)
     let mut title_bar: String = format!("{}", "jumbledFox's Minesweeper".to_owned().stylize().with(Color::Rgb {r: 239, g: 125, b: 87}));
     title_bar.push_str(&format!("{}", " - ".stylize().grey()));
-    title_bar.push_str(&format!("{}", "Easy ".stylize().green()));
-    title_bar.push_str(&format!("{}", "(10x10, 25 mines)".stylize().dark_green()));
+    let board_type = Board::get_type_values(&board.board_type);
+    title_bar.push_str(&format!("{} ", board_type.3.stylize().with(board_type.4)));
+    title_bar.push_str(&format!("{}", &format!("({}x{}, {} mines)", board_type.0, board_type.1, board_type.2).stylize().with(board_type.5)));
 
     title_bar.push_str("\n\r");
     title_bar.push_str(&format!("{}", "Mines: "));
-    let mines_left = match board.flag_count >= board.bombs.len() {
-        false => board.bombs.len() - board.flag_count,
+    let mines_left = match board.flag_count >= board.bomb_count as usize {
+        false => board.bomb_count as usize - board.flag_count,
         _ => 0,
     };
     title_bar.push_str(&format!("{}", &format!("{:0>2}", mines_left.to_string()).stylize().red()));
@@ -118,7 +119,13 @@ pub fn draw_screen(board: &Board) -> std::io::Result<()> {
     title_bar.push_str(&format!("{}", &format!("{:0>3}", board.timer.to_string()).stylize().red()));
     title_bar.push_str("\n\r");
     title_bar.push_str(&lines);
-
+    if board.exit.is_some() {
+        let s = match &board.exit.unwrap() {
+            board::ExitType::Win  => "You win, well done!",
+            board::ExitType::Lose => "BANG! You lose, better luck next time!",
+        };
+        title_bar.push_str(s);
+    }
     // Draw the screen
     execute!(
         stdout(),

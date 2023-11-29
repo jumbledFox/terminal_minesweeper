@@ -1,4 +1,5 @@
 use std::cmp::min;
+use crossterm::style::Color;
 use rand::prelude::*;
 
 pub type Position = (u16, u16);
@@ -11,7 +12,7 @@ pub enum Tile {
     Flag,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum ExitType {
     Win,
     Lose,
@@ -36,28 +37,32 @@ pub struct Board {
     pub flag_count: usize,
     pub timer: u64,
     pub exit: Option<ExitType>,
+    pub board_type: BoardType,
 }
 
 impl Board {
     // Creates a new board
     pub fn new(board_type: BoardType) -> Board {
-        let info: (u16, u16, u16) = match board_type {
-            BoardType::Easy =>   (9, 9, 10),
-            BoardType::Normal => (16, 16, 40),
-            BoardType::Hard =>   (30, 16, 99),
-            BoardType::Custom(w, h, b) => (w, h, b),
-        };
+        let info = Board::get_type_values(&board_type);
         let width  = info.0;
         let height = info.1;
         // Initialise tiles as a bunch of unopened tiles
-        let mut tiles = vec![Tile::Unopened; width as usize*height as usize];
+        let tiles = vec![Tile::Unopened; width as usize*height as usize];
         // Set the selected cell to be in the middle of the grid
         let selected_cell = (width/2, height/2);
 
         Board { width: width, height: height, tiles: tiles, bombs: Vec::new(), bomb_count: info.2, goes: 0,
-            selected_cell: selected_cell, flag_count: 0, timer: 0, exit: None }
+            selected_cell: selected_cell, flag_count: 0, timer: 0, exit: None, board_type: board_type }
     }
 
+    pub fn get_type_values(board_type: &BoardType) -> (u16, u16, u16, String, crossterm::style::Color, crossterm::style::Color) {
+        match board_type {
+            BoardType::Easy =>   (9,  9,  10, String::from("Easy"),   Color::Green, Color::DarkGreen),
+            BoardType::Normal => (16, 16, 40, String::from("Normal"), Color::Cyan,  Color::DarkCyan),
+            BoardType::Hard =>   (30, 16, 99, String::from("Hard"),   Color::Red,   Color::DarkRed),
+            BoardType::Custom(w, h, b) => (*w, *h, min(*b, (w*h)-9), String::from("Custom"), Color::Yellow, Color::DarkYellow),
+        }
+    }
     // This function populates the bomb vector, making sure no bombs are generated in a 3x3 area around the selected cell
     pub fn populate_bombs(&mut self) {
         // Work out the maximum number of bombs that can fit on the board, with a hard limit of 2^16
@@ -190,7 +195,6 @@ impl Board {
         // You dug a bomb!! Yeeooowwch!!
         if self.bombs.contains(&self.selected_cell) {
             // BANG!
-            println!("BANG! You lose :c");
             self.exit = Some(ExitType::Lose);
             return;
         }
@@ -198,7 +202,6 @@ impl Board {
         self.flood_dig(x, y);
         // Check if, once digging's complete, all uncovered tiles are mines
         if self.tiles.iter().filter(|&x| x == &Tile::Unopened || x == &Tile::Flag ).count() == self.bombs.len() {
-            println!("You win!! Well done!");
             self.exit = Some(ExitType::Win);
         }
     }
