@@ -31,6 +31,7 @@ pub fn finalize() -> std::io::Result<()> {
         stdout(),
         // Go to bottom of screen
         cursor::MoveTo(0, crossterm::terminal::size().unwrap().1),
+        cursor::Show,
         //DisableBracketedPaste,
         //PopKeyboardEnhancementFlags,
         //DisableFocusChange,
@@ -108,8 +109,8 @@ pub fn draw_screen(board: &Board) -> std::io::Result<()> {
 
     title_bar.push_str("\n\r");
     title_bar.push_str(&format!("{}", "Mines: "));
-    let mines_left = match board.flag_count >= board.bomb_count as usize {
-        false => board.bomb_count as usize - board.flag_count,
+    let mines_left = match board.flag_count >= board.bombs.len() {
+        false => board.bombs.len() - board.flag_count,
         _ => 0,
     };
     title_bar.push_str(&format!("{}", &format!("{:0>2}", mines_left.to_string()).stylize().red()));

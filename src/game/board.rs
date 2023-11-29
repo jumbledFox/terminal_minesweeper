@@ -16,6 +16,15 @@ pub enum ExitType {
     Win,
     Lose,
 }
+
+#[derive(PartialEq)]
+pub enum BoardType {
+    Easy,
+    Normal,
+    Hard,
+    Custom(u16, u16, u16),
+}
+
 pub struct Board {
     pub width: u16,
     pub height: u16,
@@ -31,13 +40,21 @@ pub struct Board {
 
 impl Board {
     // Creates a new board
-    pub fn new(width: u16, height: u16, bomb_count: u16) -> Board {
+    pub fn new(board_type: BoardType) -> Board {
+        let info: (u16, u16, u16) = match board_type {
+            BoardType::Easy =>   (9, 9, 10),
+            BoardType::Normal => (16, 16, 40),
+            BoardType::Hard =>   (30, 16, 99),
+            BoardType::Custom(w, h, b) => (w, h, b),
+        };
+        let width  = info.0;
+        let height = info.1;
         // Initialise tiles as a bunch of unopened tiles
         let mut tiles = vec![Tile::Unopened; width as usize*height as usize];
         // Set the selected cell to be in the middle of the grid
         let selected_cell = (width/2, height/2);
 
-        Board { width: width, height: height, tiles: tiles, bombs: Vec::new(), bomb_count: bomb_count, goes: 0,
+        Board { width: width, height: height, tiles: tiles, bombs: Vec::new(), bomb_count: info.2, goes: 0,
             selected_cell: selected_cell, flag_count: 0, timer: 0, exit: None }
     }
 

@@ -12,40 +12,48 @@ use crossterm::{
 };
 
 pub mod game;
+use game::board;
 use game::{board::Board, renderer};
 
 fn main()-> std::io::Result<()> {
 
     let args: Vec<String> = env::args().collect();
     
-    let mut board: Board;
+    let mut board: Option<Board> = None;
     match args.len() {
-        // One word arguments
-        _ => {
-            match args[1].to_lowercase().as_str() {
-                "easy" => { board = Board::new(9,  9, 10) }
-                "normal" => { board = Board::new(16, 16, 40) }
-                "hard" | _ => { board = Board::new(30, 16, 99) }
-                // "help" => {},
-                // _ => { }
-            }
+        // Normal game
+        2 => match args[1].to_lowercase().as_str() {
+            "easy"   => { board = Some(Board::new(board::BoardType::Easy)) }
+            "normal" => { board = Some(Board::new(board::BoardType::Normal)) }
+            "hard"   => { board = Some(Board::new(board::BoardType::Hard)) }
+            _ => ()
         }
-        // // Custom game
-        // 4 => {
-        //     if args[2].parse::<u16>().unwrap() == 1 {
-
-        //     }
-        // }
-        // _ => {}
+        // Custom game
+        4 => {
+            let mut params: [u16; 3] = [0; 3];
+            for i in 1..=3 {
+                if let Ok(param) = args[i].parse::<u16>() {
+                    params[i-1] = param;
+                } else {
+                    println!("Argument {:?} is invalid!! must be an integer", i);
+                    return Ok(());
+                }
+            }
+            board = Some(Board::new(board::BoardType::Custom(params[0], params[1], params[2])));
+        }
+        _ => ()
     }
-
+    if board.is_none() {
+        println!("help text");
+        return Ok(());
+    }
+    let mut board = board.unwrap();
     //board = Board::new(16, 16, 20);
     let timer = Instant::now();
     let mut redraw_board = true;
 
     renderer::initialize()?;
 
-    //return Ok(());
     // Main loop
     loop {
         // This is the main game loop
@@ -82,10 +90,7 @@ fn main()-> std::io::Result<()> {
                     }
                 },
                 // If the terminal is resized, redraw!!
-                Event::Resize(w, h) => {
-                    renderer::clear()?;
-                    redraw_board = true;
-                }
+                Event::Resize(w, h) => { renderer::clear()?; redraw_board = true; }
                 _ => { },
             }    
         }
