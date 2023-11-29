@@ -43,16 +43,16 @@ fn main()-> std::io::Result<()> {
         }
         _ => ()
     }
+    renderer::initialize()?;
+
     if board.is_none() {
-        println!("help text");
-        return Ok(());
+        return renderer::help_screen();
     }
     let mut board = board.unwrap();
     //board = Board::new(16, 16, 20);
     let timer = Instant::now();
     let mut redraw_board = true;
 
-    renderer::initialize()?;
 
     // Main loop
     loop {

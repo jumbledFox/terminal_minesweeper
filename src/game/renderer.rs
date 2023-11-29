@@ -32,10 +32,53 @@ pub fn finalize() -> std::io::Result<()> {
         // Go to bottom of screen
         cursor::MoveTo(0, crossterm::terminal::size().unwrap().1),
         cursor::Show,
+        ResetColor,
         //DisableBracketedPaste,
         //PopKeyboardEnhancementFlags,
         //DisableFocusChange,
         //DisableMouseCapture,
+    )?;
+    disable_raw_mode()
+}
+
+pub fn help_screen() -> std::io::Result<()> {
+    // Please... this is so ugly....
+    execute!(
+        stdout(),
+        SetForegroundColor(get_tile_style(None).0),
+        SetAttribute(Attribute::Underlined),
+        Print("jumbledFox's epic console minesweeper game\n\r"),
+        SetAttribute(Attribute::NoUnderline),
+        ResetColor,
+        Print("Run with arguments "),
+        SetForegroundColor(Color::Green),
+        Print("`easy`"),
+        ResetColor,
+        Print(", "),
+        SetForegroundColor(Color::Cyan),
+        Print("`normal`"),
+        ResetColor,
+        Print(", or "),
+        SetForegroundColor(Color::Red),
+        Print("`hard`"),
+        ResetColor,
+        Print(" for different difficulties.\n\rFor custom settings, use arguments for "),
+        SetForegroundColor(Color::Yellow),
+        Print("`width`"),
+        ResetColor,
+        Print(", "),
+        SetForegroundColor(Color::Yellow),
+        Print("`height`"),
+        ResetColor,
+        Print(", and "),
+        SetForegroundColor(Color::Yellow),
+        Print("`bomb_count`"),
+        ResetColor,
+        Print(", \n\re.g. "),
+        SetForegroundColor(Color::Yellow),
+        Print("`8 8 10`"),
+        ResetColor,
+        Print(" for a quick little game."),
     )?;
     disable_raw_mode()
 }
@@ -155,7 +198,7 @@ pub fn draw_screen(board: &Board) -> std::io::Result<()> {
 }
 
 // Gets the color pair of a specified tile
-fn get_tile_style(tile: Option<&Tile>) -> (Color, Color, bool) {
+pub fn get_tile_style(tile: Option<&Tile>) -> (Color, Color, bool) {
     // If it's none, that means we're getting the style of a bomb, so return it!!
     if tile.is_none() { return (Color::Rgb{ r: 239, g: 125, b: 87 }, Color::Reset, true) }
     match tile.unwrap() {
