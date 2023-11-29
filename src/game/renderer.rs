@@ -83,7 +83,9 @@ pub fn help_screen() -> std::io::Result<()> {
     disable_raw_mode()
 }
 
-
+pub fn wait() {
+    let _ = std::io::stdin().read_line(&mut String::new()).unwrap();
+}
 // Clears the screen
 pub fn clear() -> std::io::Result<()> {
     execute!(
@@ -120,7 +122,7 @@ pub fn draw_screen(board: &Board) -> std::io::Result<()> {
             if board.exit.is_some() {
                 // If there's not a bomb at the current position and it's a flag, show that the flag was wrong!
                 if !bomb_at_current_pos && tile == &Tile::Flag {
-                    tile_str = tile_str.crossed_out();
+                    tile_str = " X ".to_string().stylize().crossed_out();
                 }
             }        
             if board.exit == Some(board::ExitType::Lose) && board.bombs.contains(&(x, y)) && tile != &Tile::Flag {

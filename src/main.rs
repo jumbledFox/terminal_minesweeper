@@ -20,12 +20,17 @@ fn main()-> std::io::Result<()> {
     let mut args: Vec<String> = env::args().collect();
     args.remove(0);
     
+    let no_args: bool;
     // If the user didn't input any arguments.. ask nicely
     if args.len() == 0 {
         let mut s = String::new();
-        println!("Arguments: ");
+        renderer::help_screen()?;
+        println!("");
         std::io::stdin().read_line(&mut s).expect("Did not enter a correct string");
         args = s.split_whitespace().map(|s| s.to_string()).collect();
+        no_args = true;
+    } else {
+        no_args = false;
     }
 
     let mut board: Option<Board> = None;
@@ -55,7 +60,11 @@ fn main()-> std::io::Result<()> {
     renderer::initialize()?;
 
     if board.is_none() {
-        return renderer::help_screen();
+        if !no_args {
+            renderer::help_screen()?;
+        }
+        renderer::wait();
+        return Ok(());
     }
     let mut board = board.unwrap();
     //board = Board::new(16, 16, 20);
@@ -106,7 +115,7 @@ fn main()-> std::io::Result<()> {
         // Redraw the board
         if redraw_board { renderer::draw_screen(&board)?; redraw_board = false; }
         // Exit if the game is over
-        if board.exit.is_some() { break; }
+    if board.exit.is_some() { renderer::wait(); break; }
     }
     // Clean up
     renderer::finalize()
