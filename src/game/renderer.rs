@@ -50,7 +50,7 @@ pub fn help_screen() -> std::io::Result<()> {
         Print("jumbledFox's epic console minesweeper game\n\r"),
         SetAttribute(Attribute::NoUnderline),
         ResetColor,
-        Print("Run with arguments "),
+        Print("Run with 1 argument "),
         SetForegroundColor(Color::Green),
         Print("`easy`"),
         ResetColor,
@@ -62,7 +62,7 @@ pub fn help_screen() -> std::io::Result<()> {
         SetForegroundColor(Color::Red),
         Print("`hard`"),
         ResetColor,
-        Print(" for different difficulties.\n\rFor custom settings, use arguments for "),
+        Print(" for different difficulties.\n\rFor custom settings, use 3 arguments for "),
         SetForegroundColor(Color::Yellow),
         Print("`width`"),
         ResetColor,
@@ -76,9 +76,9 @@ pub fn help_screen() -> std::io::Result<()> {
         ResetColor,
         Print(", \n\re.g. "),
         SetForegroundColor(Color::Yellow),
-        Print("`8 8 10`"),
+        Print("`50 50 400`"),
         ResetColor,
-        Print(" for a quick little game."),
+        Print(" if you're feeling like a challenge."),
     )?;
     disable_raw_mode()
 }
