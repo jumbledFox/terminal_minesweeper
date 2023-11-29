@@ -17,23 +17,32 @@ use game::{board::Board, renderer};
 
 fn main()-> std::io::Result<()> {
 
-    let args: Vec<String> = env::args().collect();
+    let mut args: Vec<String> = env::args().collect();
+    args.remove(0);
     
+    // If the user didn't input any arguments.. ask nicely
+    if args.len() == 0 {
+        let mut s = String::new();
+        println!("Arguments: ");
+        std::io::stdin().read_line(&mut s).expect("Did not enter a correct string");
+        args = s.split_whitespace().map(|s| s.to_string()).collect();
+    }
+
     let mut board: Option<Board> = None;
     match args.len() {
         // Normal game
-        2 => match args[1].to_lowercase().as_str() {
+        1 => match args[0].to_lowercase().as_str() {
             "easy"   => { board = Some(Board::new(board::BoardType::Easy)) }
             "normal" => { board = Some(Board::new(board::BoardType::Normal)) }
             "hard"   => { board = Some(Board::new(board::BoardType::Hard)) }
             _ => ()
         }
         // Custom game
-        4 => {
+        3 => {
             let mut params: [u16; 3] = [0; 3];
-            for i in 1..=3 {
+            for i in 0..=2 {
                 if let Ok(param) = args[i].parse::<u16>() {
-                    params[i-1] = param;
+                    params[i] = param;
                 } else {
                     println!("Argument {:?} is invalid!! must be an integer", i);
                     return Ok(());
