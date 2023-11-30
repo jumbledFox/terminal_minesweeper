@@ -83,9 +83,6 @@ pub fn help_screen() -> std::io::Result<()> {
     disable_raw_mode()
 }
 
-pub fn wait() {
-    let _ = std::io::stdin().read_line(&mut String::new()).unwrap();
-}
 // Clears the screen
 pub fn clear() -> std::io::Result<()> {
     execute!(

@@ -5,7 +5,7 @@ use crossterm::{
     execute,
     cursor::{self, MoveTo},
     event::{self, poll, read, Event, KeyCode, KeyEvent, KeyEventKind},
-    event::{
+    event::{ 
         DisableBracketedPaste, DisableFocusChange, EnableBracketedPaste,
         EnableFocusChange, PopKeyboardEnhancementFlags, DisableMouseCapture, EnableMouseCapture, 
     },
@@ -63,7 +63,7 @@ fn main()-> std::io::Result<()> {
         if !no_args {
             renderer::help_screen()?;
         }
-        renderer::wait();
+        wait_until_keypress()?;
         return Ok(());
     }
     let mut board = board.unwrap();
@@ -115,8 +115,24 @@ fn main()-> std::io::Result<()> {
         // Redraw the board
         if redraw_board { renderer::draw_screen(&board)?; redraw_board = false; }
         // Exit if the game is over
-    if board.exit.is_some() { renderer::wait(); break; }
+    if board.exit.is_some() {
+        // Wait until a key is pressed to exit
+        wait_until_keypress()?;
+        break;
+        }
     }
     // Clean up
     renderer::finalize()
+}
+
+fn wait_until_keypress() -> std::io::Result<()> {
+    loop {
+        let event = read()?;
+        match event {
+            // If a key is pressed, handle it
+            Event::Key(KeyEvent { code, modifiers, kind, state }) => {break;}
+            _ => { },
+        }   
+    }
+    Ok(())
 }
