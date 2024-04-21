@@ -1,3 +1,7 @@
+# Read this (or don't)
+
+I plan to remake this pretty soon, some of the code in here is a bit yucky and from when I was first learning rust...
+
 # Terminal Minesweeper
 
 A terminal minesweeper game, made in Rust in a few days
